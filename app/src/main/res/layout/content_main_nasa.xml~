@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context=".MainNASaActivity"
+    tools:showIn="@layout/activity_main_nasa">
+
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="292dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="291dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.502"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/nasalogo" />
+
+    <Switch
+        android:id="@+id/appOn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="24dp"
+        android:scaleX="1"
+        android:scaleY="1"
+        android:switchMinWidth="@android:dimen/app_icon_size"
+        android:text="NASA Test App"
+        android:textAlignment="viewStart"
+        android:textIsSelectable="false"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:thumbTextPadding="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.484"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/imageView" />
+
+    <RadioButton
+        android:id="@+id/a_indicator"
+        android:text="A"
+        style="@style/indiRadioButton"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/appOn" />
+
+    <RadioButton
+        android:id="@+id/b_indicator"
+        android:text="B"
+        style="@style/indiRadioButton"
+        app:layout_constraintStart_toEndOf="@+id/a_indicator"
+        app:layout_constraintTop_toBottomOf="@+id/appOn" />
+
+    <RadioButton
+        android:id="@+id/c_indicator"
+        android:text="C"
+        style="@style/indiRadioButton"
+        app:layout_constraintStart_toEndOf="@+id/b_indicator"
+        app:layout_constraintTop_toBottomOf="@+id/appOn" />
+
+    <RadioButton
+        android:id="@+id/d_indicator"
+        android:text="D"
+        style="@style/indiRadioButton"
+        app:layout_constraintStart_toEndOf="@+id/c_indicator"
+        app:layout_constraintTop_toBottomOf="@+id/appOn" />
+
+    <RadioButton
+        android:id="@+id/e_indicator"
+        android:text="E"
+        style="@style/indiRadioButton"
+        app:layout_constraintStart_toEndOf="@+id/d_indicator"
+        app:layout_constraintTop_toBottomOf="@+id/appOn" />
+
+    <RadioButton
+        android:id="@+id/f_indicator"
+        android:text="F"
+        style="@style/indiRadioButton"
+        app:layout_constraintStart_toEndOf="@+id/e_indicator"
+        app:layout_constraintTop_toBottomOf="@+id/appOn" />
+
+    <EditText
+        android:id="@+id/a_team"
+        style="@style/teamName"
+        app:layout_constraintStart_toStartOf="@+id/a_indicator"
+        app:layout_constraintTop_toBottomOf="@+id/a_indicator" />
+	/>
+
+    <EditText
+        android:id="@+id/b_team"
+        style="@style/teamName"
+        app:layout_constraintStart_toStartOf="@+id/b_indicator"
+        app:layout_constraintTop_toBottomOf="@+id/b_indicator" />
+	/>
+
+    <EditText
+        android:id="@+id/c_team"
+        style="@style/teamName"
+        app:layout_constraintStart_toStartOf="@+id/c_indicator"
+        app:layout_constraintTop_toBottomOf="@+id/c_indicator" />
+	/>
+
+    <EditText
+        android:id="@+id/d_team"
+        style="@style/teamName"
+        app:layout_constraintStart_toStartOf="@+id/d_indicator"
+        app:layout_constraintTop_toBottomOf="@+id/d_indicator" />
+	/>
+
+    <EditText
+        android:id="@+id/e_team"
+        style="@style/teamName"
+        app:layout_constraintStart_toStartOf="@+id/e_indicator"
+        app:layout_constraintTop_toBottomOf="@+id/e_indicator" />
+	/>
+
+    <EditText
+        android:id="@+id/f_team"
+        style="@style/teamName"
+        app:layout_constraintStart_toStartOf="@+id/f_indicator"
+        app:layout_constraintTop_toBottomOf="@+id/f_indicator" />
+	/>
+
+    <EditText
+        android:id="@+id/a_color"
+        style="@style/colorBar"
+        app:layout_constraintStart_toStartOf="@+id/a_indicator"
+        app:layout_constraintTop_toBottomOf="@+id/a_indicator" />
+
+    <EditText
+        android:id="@+id/b_color"
+        style="@style/colorBar"
+        app:layout_constraintStart_toStartOf="@+id/b_indicator"
+        app:layout_constraintTop_toBottomOf="@+id/b_indicator"
+	/>
+
+    <EditText
+        android:id="@+id/c_color"
+        style="@style/colorBar"
+        app:layout_constraintStart_toStartOf="@+id/c_indicator"
+        app:layout_constraintTop_toBottomOf="@+id/c_indicator"
+	/>
+
+    <EditText
+        android:id="@+id/d_color"
+        style="@style/colorBar"
+        app:layout_constraintStart_toStartOf="@+id/d_indicator"
+        app:layout_constraintTop_toBottomOf="@+id/d_indicator"
+	/>
+
+    <EditText
+        android:id="@+id/e_color"
+        style="@style/colorBar"
+        app:layout_constraintStart_toStartOf="@+id/e_indicator"
+        app:layout_constraintTop_toBottomOf="@+id/e_indicator"
+	/>
+
+    <EditText
+        android:id="@+id/f_color"
+        style="@style/colorBar"
+        app:layout_constraintStart_toStartOf="@+id/f_indicator"
+        app:layout_constraintTop_toBottomOf="@+id/f_indicator"
+	/>
+
+</android.support.constraint.ConstraintLayout>

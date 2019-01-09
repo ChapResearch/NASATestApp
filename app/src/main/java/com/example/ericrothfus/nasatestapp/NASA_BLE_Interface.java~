@@ -1,0 +1,45 @@
+package com.example.ericrothfus.nasatestapp;
+
+//
+// NASA_BLE_Interface - the following interface is used to interact with the NASA
+//                      BLE system. In particular, it is meant to be used by the
+//                      controller as communication comes from/to the contributors.
+//
+
+public interface NASA_BLE_Interface {
+
+    //
+    // NASA_controllerName() - called when the contributor wants to get the name of the controller.
+    //                         The controller code should return a String with the name in it.
+    //                         The name returned must be 10 characters or less.
+    //
+    String NASA_controllerName();
+
+
+    //
+    // NASA_passwd() - called by the contributor to ensure that we have the "secret" to connect
+    //                 to the controller. NOTE that this isn't intended to be secure. It's just
+    //                 meant to keep the riff-raff out. :-)
+    //                 The password returned must be 10 characters or less.
+    //
+    String NASA_password();
+
+    //
+    // NASA_slotChange() - called when there is a change to one of the slots. Slot states are
+    //			   as follows:
+    //
+    //
+    void NASA_slotChange(int slot, boolean state);
+
+    //
+    // NASA_teamColor() - called when the contributor reports the color of the given team.
+    //                    0x01 = BLUE, 0x02 = RED, anything else means no-color-chosen.
+    //
+    void NASA_teamColor(int slot, int color);
+
+    //
+    // NASA_teamNumber() - called when the contributor reports the name of the team.
+    //
+    void NASA_teamNumber(int slot, String name);
+    
+}
