@@ -2,6 +2,7 @@ package com.example.ericrothfus.nasatestapp;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -14,12 +15,16 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.Switch;
+import android.widget.TextView;
 
 public class MainNASaActivity extends AppCompatActivity {
 
     Switch onSwitch;
 
     NASA_BLE ble;
+    NASA_DB nasaDB;
+
+    private Handler connectionReportHandler;
 
     private final NASA_BLE_Interface bleCallbacks = new NASA_BLE_Interface() {
 
@@ -137,7 +142,11 @@ public class MainNASaActivity extends AppCompatActivity {
 	onSwitch = (Switch) findViewById(R.id.appOn);
 
 	ble = new NASA_BLE(this);
-	
+	nasaDB = new NASA_DB(this);
+
+	connectionReportHandler = new Handler();
+	startConnectionReportTask();			// update the connection count periodically
+
 	onSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 		    Log.i("NASA","Change to - " + isChecked);
@@ -179,4 +188,26 @@ public class MainNASaActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    private void updateConnectionsReport()
+    {
+	int connections = ble.connections();
+	TextView con = findViewById(R.id.connections);
+	con.setText(Integer.toString(connections));
+    }
+
+    Runnable connectionReportRunnable = new Runnable() {
+	    @Override
+	    public void run() {
+		try {
+		    updateConnectionsReport();
+		} finally {
+		    connectionReportHandler.postDelayed(connectionReportRunnable,1000);
+		}
+	    }
+	};
+    
+    private void startConnectionReportTask()
+    {
+	connectionReportRunnable.run();
+    }
 }

@@ -105,6 +105,11 @@ public class NASA_BLE {
 	mBluetoothAdapter = mBluetoothManager.getAdapter();
     }
 
+    public int connections()
+    {
+	return(mBluetoothManager.getConnectedDevices(BluetoothGatt.GATT_SERVER).size());
+    }
+    
     public void stopServer()
     {
           nasaGATTserver.close();
@@ -218,7 +223,20 @@ public class NASA_BLE {
 					Log.v(TAG, "Connected to device: " + device.getAddress());
 				} else if (newState == BluetoothGatt.STATE_DISCONNECTED) {
 					mBluetoothDevices.remove(device);
-					Log.v(TAG, "Disconnected from device");
+					int target = NASA_Contributor.lookup(contributors,device);
+					if(target > 0) {
+					    Log.v(TAG, "Disconnected from device " + target);
+					    contributors[target].disconnect();
+					    final int slotdis = target;
+					    new Handler(Looper.getMainLooper()).post(new Runnable(){
+						    @Override
+						    public void run() {
+							NASAcallbacks.NASA_slotChange(slotdis,false);
+						    }
+						});
+					} else {
+					    Log.v(TAG, "Disconnected from un-tracked device");
+					}
 				}
 			} else {
 				mBluetoothDevices.remove(device);
@@ -322,11 +340,15 @@ public class NASA_BLE {
 
 			    case 0x01:	// keep alive
 				Log.v(TAG, "Got a keep alive");
+				int count = mBluetoothManager.getConnectedDevices(BluetoothGatt.GATT_SERVER).size();
+				Log.v(TAG, "Count is " + count);
+				contributors[i].slotRefresh();
 				break;
 			    
 			    case 0x02:	// team number incoming
 				final String teamNumber = new String(data);
 				Log.v(TAG, "Got a number of \"" + teamNumber + "\"");
+				contributors[i].setTeamNumber(teamNumber);
 				final int i3 = i;
 				new Handler(Looper.getMainLooper()).post(new Runnable(){
 					@Override
@@ -339,6 +361,7 @@ public class NASA_BLE {
 			    case 0x03:	// color coming (0x00 no color, 0x01 blue, 0x02 red, else no color)
 				final int color = (int)data[0];
 				Log.v(TAG, "Got a color of \"" + ((color==1)?"blue":((color==2)?"red":"no color")) + "\"");
+				contributors[i].setTeamColor(color);
 				final int i4 = i;
 				new Handler(Looper.getMainLooper()).post(new Runnable(){
 					@Override
@@ -348,9 +371,17 @@ public class NASA_BLE {
 				    });
 				break;
 			    
-			    case 0x04:	// person name
-				String personName = new String(data);
-				Log.v(TAG, "Got a name of \"" + personName + "\"");
+			    case 0x04:	// user name
+				final String userName = new String(data);
+				Log.v(TAG, "Got a name of \"" + userName + "\"");
+				contributors[i].setUserName(userName);
+				final int i5 = i;
+				new Handler(Looper.getMainLooper()).post(new Runnable(){
+					@Override
+					public void run() {
+					    NASAcallbacks.NASA_contributorName(i5,userName);
+					}
+				    });
 				break;
 
 			    case 0x05:	// data transmission - packet number first byte

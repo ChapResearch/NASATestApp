@@ -179,50 +179,62 @@
 	/>
 
 
-
-	
     <EditText
         android:id="@+id/a_color"
         style="@style/colorBar"
+        android:background="@android:color/darker_gray"
         app:layout_constraintStart_toStartOf="@+id/a_indicator"
         app:layout_constraintTop_toBottomOf="@+id/a_indicator" />
 
     <EditText
         android:id="@+id/b_color"
         style="@style/colorBar"
+        android:background="@android:color/darker_gray"
         app:layout_constraintStart_toStartOf="@+id/b_indicator"
-        app:layout_constraintTop_toBottomOf="@+id/b_indicator"
-	/>
+        app:layout_constraintTop_toBottomOf="@+id/b_indicator" />
 
     <EditText
         android:id="@+id/c_color"
         style="@style/colorBar"
+        android:background="@android:color/darker_gray"
         app:layout_constraintStart_toStartOf="@+id/c_indicator"
-        app:layout_constraintTop_toBottomOf="@+id/c_indicator"
-	/>
+        app:layout_constraintTop_toBottomOf="@+id/c_indicator" />
 
     <EditText
         android:id="@+id/d_color"
         style="@style/colorBar"
+        android:background="@android:color/darker_gray"
         app:layout_constraintStart_toStartOf="@+id/d_indicator"
-        app:layout_constraintTop_toBottomOf="@+id/d_indicator"
-	/>
+        app:layout_constraintTop_toBottomOf="@+id/d_indicator" />
 
     <EditText
         android:id="@+id/e_color"
         style="@style/colorBar"
+        android:background="@android:color/darker_gray"
         app:layout_constraintStart_toStartOf="@+id/e_indicator"
-        app:layout_constraintTop_toBottomOf="@+id/e_indicator"
-	/>
+        app:layout_constraintTop_toBottomOf="@+id/e_indicator" />
 
     <EditText
         android:id="@+id/f_color"
         style="@style/colorBar"
+        android:background="@android:color/darker_gray"
         app:layout_constraintStart_toStartOf="@+id/f_indicator"
-        app:layout_constraintTop_toBottomOf="@+id/f_indicator"
-	/>
+        app:layout_constraintTop_toBottomOf="@+id/f_indicator" />
+
+    <TextView
+        android:id="@+id/connections"
+        android:layout_width="50sp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="160dp"
+        android:layout_marginEnd="160dp"
+        android:layout_marginBottom="50dp"
+        android:text="0"
+        android:textAlignment="center"
+        android:textSize="24sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:text="0" />
 
 
-
-    
 </android.support.constraint.ConstraintLayout>

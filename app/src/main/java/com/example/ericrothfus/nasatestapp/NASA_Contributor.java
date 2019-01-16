@@ -20,9 +20,11 @@ public class NASA_Contributor {
 
     public int timestamp;		// last contact by this contributor
     public BluetoothDevice device;	// last device of this contributor
-    public String name;			// name of contributor
+    public String userName;		// name of contributor
+    public String teamNumber;		// team number of robot
     private boolean connected;		// true if connected
     public String data;			// last transmitted data (should be cleared after upload)
+    public int color;
 
     public static final int timeout = 60;	// 60 second timeout before a slot is considered open (if needed)
 
@@ -31,8 +33,26 @@ public class NASA_Contributor {
 	connected = false;
 	timestamp = 0;
 	device = null;
+	teamNumber = null;
+	userName = null;
+	color = 0;
     }
-    
+
+    public static int lookup(NASA_Contributor[] contributors, BluetoothDevice target)
+    {
+	int i;
+
+	for(i=0; i < contributors.length; i++) {
+	    //	    if(contributors[i].connected) {
+		if(contributors[i].device.equals(target)){
+		    return(i);
+		}
+		//	    }
+	}
+
+	return(-1);
+    }
+	
     //
     // slotAvailable() - checks to see if this slot is available. This means that either
     //			 we are not connected in this slot, or the last guy in this
@@ -76,5 +96,24 @@ public class NASA_Contributor {
 	timestamp = (int)(date.getTime()/1000);
     }
 
+    public void setTeamNumber(String incomingTeamNumber)
+    {
+	teamNumber = incomingTeamNumber;
+    }
+
+    public void setUserName(String incomingUserName)
+    {
+	userName = incomingUserName;
+    }
 	
+    public void setTeamColor(int incomingColor)
+    {
+	color = incomingColor;
+    }
+
+    public void disconnect()
+    {
+	connected = false;
+    }
+    
 }
