@@ -1,9 +1,9 @@
 package com.example.ericrothfus.nasatestapp;
 
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -14,15 +14,25 @@ import android.view.MenuItem;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.RadioButton;
+import android.widget.CheckBox;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Button;
+import android.widget.Toast;
 
 public class MainNASaActivity extends AppCompatActivity {
 
     Switch onSwitch;
 
+    int match = 100;		// just a place to start
+
+    Button nextMatchButton;
+    Button transmitButton;
+    Button startButton;
+    Button stopButton;
+    Button resetButton;
+
     NASA_BLE ble;
-    NASA_DB nasaDB;
 
     private Handler connectionReportHandler;
 
@@ -36,7 +46,7 @@ public class MainNASaActivity extends AppCompatActivity {
 		
 		return (new String("floopy"));
 	    }
-
+    
 	    @Override
 	    public String NASA_password() {
 
@@ -45,6 +55,30 @@ public class MainNASaActivity extends AppCompatActivity {
 		return (new String("doopy"));
 	    }
 
+	    @Override
+	    public String NASA_match() {
+
+		// TODO - these should access some UI component for the match number
+		
+		return (Integer.toString(match));
+	    }
+
+	    @Override
+	    public String NASA_competition() {
+
+		// TODO - these should access some UI component for the name of the competition
+		
+		return (new String("El Paso"));
+	    }
+    
+	    @Override
+	    public String NASA_year() {
+
+		// TODO - these should access some UI component for the year of the competition
+		
+		return (new String("2021"));
+	    }
+    
 	    @Override
 	    public void NASA_slotChange(int slot, boolean claimed) {
 		RadioButton indicator = null;
@@ -101,9 +135,44 @@ public class MainNASaActivity extends AppCompatActivity {
 	    }
 
 	    @Override
-	    public void NASA_dataTransmission(int slot, String jsonData)
+	    public void NASA_dataTransmission(int slot, boolean finalChunk, String jsonData)
 	    {
+		CheckBox box = null;
+		
+		switch(slot) {
+		default:
+		case 0:    	box = (CheckBox) findViewById(R.id.a_hasData); break;
+		case 1:    	box = (CheckBox) findViewById(R.id.b_hasData); break;
+		case 2:    	box = (CheckBox) findViewById(R.id.c_hasData); break;
+		case 3:    	box = (CheckBox) findViewById(R.id.d_hasData); break;
+		case 4:    	box = (CheckBox) findViewById(R.id.e_hasData); break;
+		case 5:    	box = (CheckBox) findViewById(R.id.f_hasData); break;
+		}
+		box.setChecked(finalChunk);
+	    }
 
+	    @Override
+	    public void NASA_dataUploadStatus(int slot, boolean success)
+	    {
+		CheckBox box = null;
+		
+		switch(slot) {
+		default:
+		case 0:    	box = (CheckBox) findViewById(R.id.a_hasData); break;
+		case 1:    	box = (CheckBox) findViewById(R.id.b_hasData); break;
+		case 2:    	box = (CheckBox) findViewById(R.id.c_hasData); break;
+		case 3:    	box = (CheckBox) findViewById(R.id.d_hasData); break;
+		case 4:    	box = (CheckBox) findViewById(R.id.e_hasData); break;
+		case 5:    	box = (CheckBox) findViewById(R.id.f_hasData); break;
+		}
+
+		if(success) {
+		    box.setButtonTintList(ColorStateList.valueOf(Color.parseColor("#00CC00")));
+		} else{
+		    box.setButtonTintList(ColorStateList.valueOf(Color.parseColor("#CC0000")));
+		}
+		    
+		Log.d("NASA_BLE","upload status called with slot " + slot + " and success " + success);
 	    }
 
 	    @Override
@@ -130,19 +199,9 @@ public class MainNASaActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
-
 	onSwitch = (Switch) findViewById(R.id.appOn);
 
-	ble = new NASA_BLE(this);
-	nasaDB = new NASA_DB(this);
+	ble = new NASA_BLE(this,bleCallbacks);
 
 	connectionReportHandler = new Handler();
 	startConnectionReportTask();			// update the connection count periodically
@@ -151,19 +210,64 @@ public class MainNASaActivity extends AppCompatActivity {
 		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 		    Log.i("NASA","Change to - " + isChecked);
 		    if(isChecked) {
-			ble.startServer(bleCallbacks);
+			ble.startServer();
 		    } else {
 			ble.stopServer();
 		    }
 		}
 	    });
 
-	// use the currently defined color setting routine to set grey for
-	// all of the color indicators
+	// monitor the next match button
 
-	//	for(int i=0; i < 6; i++) {
-	//	    bleCallbacks.NASA_teamColor(i,Color.LTGRAY);
-	//	}
+	nextMatchButton = (Button) findViewById(R.id.nextMatch);
+	nextMatchButton.setOnClickListener(new View.OnClickListener() {
+		@Override
+		public void onClick(View view) {
+		    match++;
+		    ble.matchUpdateContributors();
+		}
+	    });
+
+	// monitor the transmit button
+
+	transmitButton = (Button) findViewById(R.id.transmit);
+	transmitButton.setOnClickListener(new View.OnClickListener() {
+		@Override
+		public void onClick(View view) {
+		    ble.transmitContributors();
+		}
+	    });
+
+	// monitor the start button
+
+	startButton = (Button) findViewById(R.id.start);
+	startButton.setOnClickListener(new View.OnClickListener() {
+		@Override
+		public void onClick(View view) {
+		    ble.startContributors();
+		}
+	    });
+
+	// monitor the stop button
+
+	stopButton = (Button) findViewById(R.id.stop);
+	stopButton.setOnClickListener(new View.OnClickListener() {
+		@Override
+		public void onClick(View view) {
+		    ble.stopContributors();
+		}
+	    });
+	
+	// monitor the reset button
+
+	resetButton = (Button) findViewById(R.id.reset);
+	resetButton.setOnClickListener(new View.OnClickListener() {
+		@Override
+		public void onClick(View view) {
+		    ble.resetContributors();
+		}
+	    });
+	
     }
 
     @Override
@@ -201,7 +305,7 @@ public class MainNASaActivity extends AppCompatActivity {
 		try {
 		    updateConnectionsReport();
 		} finally {
-		    connectionReportHandler.postDelayed(connectionReportRunnable,1000);
+		    connectionReportHandler.postDelayed(connectionReportRunnable,10000);
 		}
 	    }
 	};

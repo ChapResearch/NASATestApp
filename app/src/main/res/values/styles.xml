@@ -68,4 +68,13 @@
     <item name="android:layout_marginTop">20dp</item>
   </style>
 
+  <style name="dataCheckbox">
+    <item name="android:layout_width">44dp</item>
+    <item name="android:layout_height">35dp</item>
+    <item name="android:checked">false</item>
+    <item name="android:clickable">false</item>
+    <item name="android:layout_marginStart">5dp</item>
+    <item name="android:layout_marginTop">20dp</item>
+  </style>
+
 </resources>

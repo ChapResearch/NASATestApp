@@ -43,6 +43,14 @@ public interface NASA_BLE_Interface {
     String NASA_password();
 
     //
+    // NASA_match() - called by the controller to get the current match number. This number is
+    //                read by Contributors, plus the characteristic is the one that Contributors
+    //                listen for notifications. When they get a notification on the match, they
+    //                reset and prepare for the next match.
+    //
+    String NASA_match();
+
+    //
     // NASA_slotChange() - called when there is a change to one of the slots. If "claimed" is TRUE
     //			   then the slot has just been claimed. If FALSE, the slot has just been
     //			   abandoned. Note that the UI will get a FALSE call followed by a TRUE call
@@ -60,6 +68,18 @@ public interface NASA_BLE_Interface {
     // NASA_teamNumber() - called when the contributor reports the name of the team.
     //
     void NASA_teamNumber(int slot, String number);
+
+    //
+    // NASA_competition() - called before uploading data to get the name of the competition
+    //                      to attach to the data.
+    //
+    String NASA_competition();
+
+    //
+    // NASA_year() - called before uploading data to get the year of the competition to
+    //               attach to the data.
+    //
+    String NASA_year();
     
     //
     // NASA_contributorName() - called when the contributor reports the name of the contributor.
@@ -67,9 +87,22 @@ public interface NASA_BLE_Interface {
     void NASA_contributorName(int slot, String name);
 
     //
-    // NASA_dataTransmission() - called when the contributor sends data. The data is in JSON format
-    //                           so it is just a string - though it can be a bit long.
+    // NASA_dataTransmission() - called after the contributor sends data. The data is in JSON format
+    //                           so it is just a string - though it can be a bit long.  Note that
+    //                           the data is automatically stored, so this call is just for info.
+    //                           The UI isn't expected to do anything with the data.  The "finalChunk"
+    //                           indicates if this was the final transmission.  Note that the UI should
+    //                           clear any indicators of data if "finalChunk" is false. This is used
+    //                           by the interface to let the UI know that it should clear the UI
+    //                           element (done when resetting).
     //
-    void NASA_dataTransmission(int slot, String jsonData);
+    void NASA_dataTransmission(int slot, boolean finalChunk, String jsonData);
+
+    //
+    // NASA_dataUploadStatus() - called when return status from data transmission to the DB is
+    //                           received. The UI can indicate success or failure if desired.
+    //                           Status is simple, true = success.
+    //
+    void NASA_dataUploadStatus(int slot, boolean success);
     
 }

@@ -22,14 +22,14 @@ import android.util.Log;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.UUID;
 
 public class NASA_BLE {
 
     private static final String TAG = "NASA_BLE!";
 
-    Context context;
-	    
+    private Context context;
 
     // the service itself has its UUID
     private static final UUID NASA_BLE_SERVICE_UUID = UUID.fromString("df85c229-277c-4070-97e3-abc1e134b6a1");
@@ -37,7 +37,9 @@ public class NASA_BLE {
     // the general characterstics for talking to the controller
     private static final UUID NASA_BLE_CONTROLLER_NAME = UUID.fromString("d9867b1d-15dd-4f18-a134-3d8e4408fcff");
     private static final UUID NASA_BLE_CONTROLLER_PW = UUID.fromString("b1de1e91-6d8a-4b5c-8b06-2e64688d3fc9");
-    private static final UUID NASA_BLE_CONTROLLER_RESET = UUID.fromString("5eda1292-e156-11e8-9f32-f2801f1b9fd1");
+    private static final UUID NASA_BLE_CONTROLLER_MATCH = UUID.fromString("5eda1292-e156-11e8-9f32-f2801f1b9fd1");
+    private static final UUID NASA_BLE_CONTROLLER_START = UUID.fromString("baa7db04-1e87-11e9-ab14-d663bd873d93");
+    private static final UUID NASA_BLE_CONTROLLER_RESET = UUID.fromString("50c0ee7a-231d-11e9-ab14-d663bd873d93");
 
     // the individual characteristics for each contributor
     private UUID[] NASA_BLE_CONTRIBUTORS_READ = {
@@ -76,18 +78,23 @@ public class NASA_BLE {
     private BluetoothGattCharacteristic[] nasaGATTcharacteristicsREAD = new BluetoothGattCharacteristic[6];
     private BluetoothGattCharacteristic[] nasaGATTcharacteristicsWRITE = new BluetoothGattCharacteristic[6];
     
-    private BluetoothGattCharacteristic nasaGATTcharacteristicsNAME, nasaGATTcharacteristicsPW, nasaGATTcharacteristicsRESET;
+    private BluetoothGattCharacteristic nasaGATTcharacteristicsNAME,
+	                                nasaGATTcharacteristicsPW,
+	                                nasaGATTcharacteristicsMATCH,
+	                                nasaGATTcharacteristicsSTART,
+	                                nasaGATTcharacteristicsRESET;
 
     //
     // CONSTRUCTOR - When creating the NASA_BLE object, go ahead and define all of the
     //               services and descriptors.
     //
-    public NASA_BLE(Context incomingContext)
+    public NASA_BLE(Context incomingContext,NASA_BLE_Interface callbacks)
     {
 	context = incomingContext;
-
+	NASAcallbacks = callbacks;
+	
 	for(int i=0; i < 6; i++) {
-	    contributors[i] = new NASA_Contributor();
+	    contributors[i] = new NASA_Contributor(NASAcallbacks);
 	}
 	
 	_initialize();
@@ -95,7 +102,6 @@ public class NASA_BLE {
 	//	_defineAdvertisting();
 	_defineService();
 	_addCharacteristics();
-	    
     }
 
     public void _initialize()
@@ -103,6 +109,140 @@ public class NASA_BLE {
 	mBluetoothDevices = new HashSet<>();
 	mBluetoothManager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
 	mBluetoothAdapter = mBluetoothManager.getAdapter();
+    }
+
+    //
+    // startContributors() - starts the clock of the contributors who are currently connected.
+    //                       It is assumed that the contributors are listening for notifications on
+    //                       the start characteristic. (See "stopContributors()" below)
+    //
+    public void startContributors()
+    {
+	for(int i=0; i < contributors.length; i++) {
+	    if(contributors[i].connected) {
+		Log.v(TAG, "start notifying slot " + i);
+		nasaGATTcharacteristicsSTART.setValue("1");
+		nasaGATTserver.notifyCharacteristicChanged(contributors[i].device,
+							   nasaGATTcharacteristicsSTART,
+							   false);
+	    }
+	}
+    }
+
+    //
+    // stopContributors() - stops the clock of the contributors who are currently connected.
+    //                       It is assumed that the contributors are listening for notifications on
+    //                       the start characteristic. (See "startContributors()" above)
+    //
+    public void stopContributors()
+    {
+	for(int i=0; i < contributors.length; i++) {
+	    if(contributors[i].connected) {
+		Log.v(TAG, "stop notifying slot " + i);
+		nasaGATTcharacteristicsSTART.setValue("0");
+		nasaGATTserver.notifyCharacteristicChanged(contributors[i].device,
+							   nasaGATTcharacteristicsSTART,
+							   false);
+	    }
+	}
+    }
+	
+    //
+    // resetContributors() - called when the UI wants to reset the contributors for the next match.
+    //                       It is assumed that the contributors are listening for notifications.
+    //
+    public void resetContributors()
+    {
+	for(int i=0; i < contributors.length; i++) {
+	    if(contributors[i].connected) {
+		Log.v(TAG, "Reset notifying slot " + i);
+		nasaGATTcharacteristicsRESET.setValue("1");
+		nasaGATTserver.notifyCharacteristicChanged(contributors[i].device,
+							   nasaGATTcharacteristicsRESET,
+							   false);
+
+		// the contributors will clear their team number and color, so go ahead and do it too
+		// also, the hasData flag is cleared
+
+		final int slot = i;
+		new Handler(Looper.getMainLooper()).post(new Runnable(){
+			@Override
+			public void run() {
+			    NASAcallbacks.NASA_teamNumber(slot,"");
+			    NASAcallbacks.NASA_teamColor(slot,0);
+			    NASAcallbacks.NASA_dataTransmission(slot,false,"");
+			    NASAcallbacks.NASA_dataUploadStatus(slot,false);
+			}
+		    });
+	    }
+	}
+    }
+	
+    //
+    // matchUpdateContributors() - called when the UI wants to change the match number for the
+    //				   contributors for the next match. It is assumed that the
+    //				   contributors are listening for notifications on the match
+    //				   number and that the match number was updated before calling this.
+    //
+    public void matchUpdateContributors()
+    {
+	for(int i=0; i < contributors.length; i++) {
+	    if(contributors[i].connected) {
+		Log.v(TAG, "match notifying slot " + i);
+		nasaGATTcharacteristicsMATCH.setValue(NASAcallbacks.NASA_match());
+		nasaGATTserver.notifyCharacteristicChanged(contributors[i].device,
+							   nasaGATTcharacteristicsMATCH,
+							   false);
+
+		// the contributors will clear their team number and color, so go ahead and do it too
+		// also, the hasData flag is cleared
+
+		final int slot = i;
+		new Handler(Looper.getMainLooper()).post(new Runnable(){
+			@Override
+			public void run() {
+			    NASAcallbacks.NASA_teamNumber(slot,"");
+			    NASAcallbacks.NASA_teamColor(slot,0);
+			    NASAcallbacks.NASA_dataTransmission(slot,false,"");
+			    NASAcallbacks.NASA_dataUploadStatus(slot,false);
+			}
+		    });
+		
+	    }
+	}
+    }
+
+    //
+    // transmitContributors() - sends the data for each Contributor who has specified data, up to
+    //                          the database. The callback will be called with
+    //
+    public void transmitContributors()
+    {
+	for(int i=0; i < contributors.length; i++) {
+	    if(contributors[i].connected) {
+		contributors[i].send(i,
+				     NASAcallbacks.NASA_year(),
+				     NASAcallbacks.NASA_competition(),
+				     NASAcallbacks.NASA_match());
+		Log.v(TAG, "transmit slot " + i);
+	    }
+	}
+    }
+	
+
+    //
+    // clearConnections() - this a brutal and unforgiving call! It will mercilessly kill all
+    //                      current bluetooth connections with no respect to who/what started
+    //                      it. So there!
+    //
+    public void clearConnections()
+    {
+	List<BluetoothDevice> connectedDevices =
+	    mBluetoothManager.getConnectedDevices(BluetoothGatt.GATT_SERVER);
+
+	for(int i=0; i < connectedDevices.size(); i++) {
+	    nasaGATTserver.cancelConnection(connectedDevices.get(i));
+	}
     }
 
     public int connections()
@@ -115,11 +255,15 @@ public class NASA_BLE {
           nasaGATTserver.close();
     }
     
-    public void startServer(NASA_BLE_Interface callbacks)
+    public void startServer()
     {
-	NASAcallbacks = callbacks;
-	
 	nasaGATTserver = mBluetoothManager.openGattServer(context, mGattServerCallback);
+
+	// CLEAR ALL CONNECTIONS!  This SHOULD work, but as seen in many references on
+	//   stack overflow - it doesn't.  Maybe it will some day.
+	
+	clearConnections();
+
 
 	// Add a service for a total of three services (Generic Attribute and Generic Access
 	// are present by default).
@@ -130,6 +274,26 @@ public class NASA_BLE {
 	    mAdvertiser.startAdvertising(mAdvSettings, mAdvData, mAdvScanResponse, mAdvCallback);
 	} else {
 	    // TODO
+	}
+    }
+
+    //
+    // uploadContributorData() - kick-off the process of uploading contributor data. Only the
+    //                           data that is "current" is uploaded.  That is, if the data
+    //                           either hasn't been received or has already been uploaded,
+    //                           then it will not be uploaded. This is true for each "slot"
+    //                           of contributor data.
+    //
+    public void uploadContributorData()
+    {
+    	for(int i=0; i < contributors.length; i++) {
+	    if(contributors[i].hasData) {
+		// send it here
+		// with a response that will call the UI for each slot (i)
+		// if(goodresponse) {
+		//     contributors[i].hasData = false;
+		// }
+	    }
 	}
     }
 	
@@ -170,10 +334,33 @@ public class NASA_BLE {
 	nasaGATTcharacteristicsPW = new BluetoothGattCharacteristic(NASA_BLE_CONTROLLER_PW, readProps,
 									    BluetoothGattCharacteristic.PERMISSION_READ);
 
+	nasaGATTcharacteristicsMATCH = new BluetoothGattCharacteristic(NASA_BLE_CONTROLLER_MATCH, readProps,
+									    BluetoothGattCharacteristic.PERMISSION_READ);
+
+	nasaGATTcharacteristicsSTART = new BluetoothGattCharacteristic(NASA_BLE_CONTROLLER_START, readProps,
+									    BluetoothGattCharacteristic.PERMISSION_READ);
+
 	nasaGATTcharacteristicsRESET = new BluetoothGattCharacteristic(NASA_BLE_CONTROLLER_RESET, readProps,
 									    BluetoothGattCharacteristic.PERMISSION_READ);
+
+	nasaGATTcharacteristicsMATCH.addDescriptor(getClientCharacteristicConfigurationDescriptor());
+	nasaGATTcharacteristicsSTART.addDescriptor(getClientCharacteristicConfigurationDescriptor());
+	nasaGATTcharacteristicsRESET.addDescriptor(getClientCharacteristicConfigurationDescriptor());
+
     }
 
+    private static final UUID CLIENT_CHARACTERISTIC_CONFIGURATION_UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
+	
+
+    public static BluetoothGattDescriptor getClientCharacteristicConfigurationDescriptor() {
+	BluetoothGattDescriptor descriptor = new BluetoothGattDescriptor(
+									 CLIENT_CHARACTERISTIC_CONFIGURATION_UUID,
+									 (BluetoothGattDescriptor.PERMISSION_READ | BluetoothGattDescriptor.PERMISSION_WRITE));
+	descriptor.setValue(new byte[]{0, 0});
+	return descriptor;
+  }
+
+    
     //
     // _addCharacteristics() - after the service has been defined, add the previously defined
     // 			       characteristics to it.
@@ -187,10 +374,10 @@ public class NASA_BLE {
 	}
 	nasaGATTservice.addCharacteristic(nasaGATTcharacteristicsNAME);
 	nasaGATTservice.addCharacteristic(nasaGATTcharacteristicsPW);
+	nasaGATTservice.addCharacteristic(nasaGATTcharacteristicsMATCH);
+	nasaGATTservice.addCharacteristic(nasaGATTcharacteristicsSTART);
 	nasaGATTservice.addCharacteristic(nasaGATTcharacteristicsRESET);
     }
-	    
-
 
     // This is the callback to process advertisting once the GATT server is started-up
     
@@ -222,9 +409,9 @@ public class NASA_BLE {
 					mBluetoothDevices.add(device);
 					Log.v(TAG, "Connected to device: " + device.getAddress());
 				} else if (newState == BluetoothGatt.STATE_DISCONNECTED) {
-					mBluetoothDevices.remove(device);
 					int target = NASA_Contributor.lookup(contributors,device);
-					if(target > 0) {
+					mBluetoothDevices.remove(device);
+					if(target >= 0) {
 					    Log.v(TAG, "Disconnected from device " + target);
 					    contributors[target].disconnect();
 					    final int slotdis = target;
@@ -268,6 +455,12 @@ public class NASA_BLE {
 					characteristic.setValue(NASAcallbacks.NASA_controllerName());
 				} else if (characteristic.getUuid().equals(NASA_BLE_CONTROLLER_PW)) {
 					characteristic.setValue(NASAcallbacks.NASA_password());
+				} else if (characteristic.getUuid().equals(NASA_BLE_CONTROLLER_MATCH)) {
+					characteristic.setValue(NASAcallbacks.NASA_match());
+				} else if (characteristic.getUuid().equals(NASA_BLE_CONTROLLER_START)) {
+					characteristic.setValue("1");
+				} else if (characteristic.getUuid().equals(NASA_BLE_CONTROLLER_RESET)) {
+					characteristic.setValue("1");
 				}
 				nasaGATTserver.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS,
 						offset, characteristic.getValue());
@@ -384,9 +577,24 @@ public class NASA_BLE {
 				    });
 				break;
 
+				// data transmission - a very simple approach is used, each data packet
+				// coming in has a one byte leader that says whether this is the FINAL
+				// packet or not. Zero is not final, otherwise final.
+				
 			    case 0x05:	// data transmission - packet number first byte
-				int remainPackets = (int)data[0];
-				Log.v(TAG, "First packet of " + (remainPackets+1) + " packet(s)");
+				final boolean finalChunk = (((int)data[0]) != 0);
+				byte[] restOfData = Arrays.copyOfRange(data,1,data.length);
+				final String dataChunk = new String(restOfData);
+				Log.v(TAG, "Got a data packet with data \"" + dataChunk + "\", final is: " + finalChunk);
+				final int i6 = i;
+				contributors[i].addData(dataChunk,finalChunk);
+				new Handler(Looper.getMainLooper()).post(new Runnable(){
+					@Override
+					public void run() {
+					    NASAcallbacks.NASA_dataTransmission(i6,finalChunk,dataChunk);
+					}
+				    });
+				
 				break;
 			    }
 			}
