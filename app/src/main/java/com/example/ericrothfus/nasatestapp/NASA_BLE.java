@@ -120,7 +120,6 @@ public class NASA_BLE {
     {
 	for(int i=0; i < contributors.length; i++) {
 	    if(contributors[i].connected) {
-		Log.v(TAG, "start notifying slot " + i);
 		nasaGATTcharacteristicsSTART.setValue("1");
 		nasaGATTserver.notifyCharacteristicChanged(contributors[i].device,
 							   nasaGATTcharacteristicsSTART,
@@ -138,7 +137,6 @@ public class NASA_BLE {
     {
 	for(int i=0; i < contributors.length; i++) {
 	    if(contributors[i].connected) {
-		Log.v(TAG, "stop notifying slot " + i);
 		nasaGATTcharacteristicsSTART.setValue("0");
 		nasaGATTserver.notifyCharacteristicChanged(contributors[i].device,
 							   nasaGATTcharacteristicsSTART,
@@ -150,16 +148,19 @@ public class NASA_BLE {
     //
     // resetContributors() - called when the UI wants to reset the contributors for the next match.
     //                       It is assumed that the contributors are listening for notifications.
+    //                       NASA_BLE callbacks are executed to clear data.
     //
     public void resetContributors()
     {
 	for(int i=0; i < contributors.length; i++) {
 	    if(contributors[i].connected) {
-		Log.v(TAG, "Reset notifying slot " + i);
 		nasaGATTcharacteristicsRESET.setValue("1");
 		nasaGATTserver.notifyCharacteristicChanged(contributors[i].device,
 							   nasaGATTcharacteristicsRESET,
 							   false);
+
+		contributors[i].hasData = false;	// clear old data
+		contributors[i].teamNumber = null;	// clear team number
 
 		// the contributors will clear their team number and color, so go ahead and do it too
 		// also, the hasData flag is cleared
@@ -193,21 +194,6 @@ public class NASA_BLE {
 		nasaGATTserver.notifyCharacteristicChanged(contributors[i].device,
 							   nasaGATTcharacteristicsMATCH,
 							   false);
-
-		// the contributors will clear their team number and color, so go ahead and do it too
-		// also, the hasData flag is cleared
-
-		final int slot = i;
-		new Handler(Looper.getMainLooper()).post(new Runnable(){
-			@Override
-			public void run() {
-			    NASAcallbacks.NASA_teamNumber(slot,"");
-			    NASAcallbacks.NASA_teamColor(slot,0);
-			    NASAcallbacks.NASA_dataTransmission(slot,false,"");
-			    NASAcallbacks.NASA_dataUploadStatus(slot,false);
-			}
-		    });
-		
 	    }
 	}
     }

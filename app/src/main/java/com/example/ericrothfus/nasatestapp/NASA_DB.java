@@ -67,8 +67,8 @@ import com.google.firebase.database.FirebaseDatabase;
 public class NASA_DB {
     private static final String TAG = "NASA_BLE!";
 
-    static private final String email = "nasascoutingapp@gmail.com";
-    static private final String password = "2468Appreciate";
+    static private final String defaultEmail = "nasascoutingapp@gmail.com";
+    static private final String defaultPassword = "2468Appreciate";
 
     static private DatabaseReference mDatabase;
     static private FirebaseAuth mAuth = null;
@@ -82,24 +82,40 @@ public class NASA_DB {
 	// When the first object is constructed, go ahead and login
 
 	if(mAuth == null) {
-	    Log.d(TAG,"First constructor of NASA_DB - logging in");
-	    mDatabase = FirebaseDatabase.getInstance().getReference();
-	    mAuth = FirebaseAuth.getInstance();
-
-	    mAuth.signInWithEmailAndPassword(email, password)
-		.addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-			@Override
-			public void onComplete(Task<AuthResult> task) {
-			    Log.d(TAG, "signIn:onComplete:" + task.isSuccessful());
-			    
-			    if (task.isSuccessful()) {
-				Log.d(TAG,"We're in");
-			    } else {
-				Log.d(TAG,"Login failed:" + task.getException().getMessage());
-			    }
-			}
-		    });
+	    login(defaultEmail,defaultPassword);
 	}
+    }
+
+    // TODO - expose this login to the upper level NASA_BLE interface
+    // TODO - expand the callbacks to include "login success/failure"
+    // TODO - add connection monitoring for the DB (needs '.info/connected')
+    // TODO - expand the callbacks to include "connection up/down"
+
+    public void login(String email,String password)
+    {
+	Log.d(TAG,"NASA_DB - logging in");
+
+	// NOTE - that this persistence call must be first
+	FirebaseDatabase.getInstance().setPersistenceEnabled(true);
+
+	mDatabase = FirebaseDatabase.getInstance().getReference();
+	mAuth = FirebaseAuth.getInstance();
+
+	mAuth.signInWithEmailAndPassword(email, password)
+	    .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+		    @Override
+		    public void onComplete(Task<AuthResult> task) {
+
+			Log.d(TAG, "signIn:onComplete:" + task.isSuccessful());
+
+			// TODO - this should call a "new" NASA callback for DB logged in
+			if (task.isSuccessful()) {
+			    Log.d(TAG,"We're in");
+			} else {
+			    Log.d(TAG,"Login failed:" + task.getException().getMessage());
+			}
+		    }
+		});
     }
 
     public void send(final int slot, String year, String team, String competition, String match, String data)
