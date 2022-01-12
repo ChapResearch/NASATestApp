@@ -3,8 +3,9 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/NASATestApp.iml" filepath="$PROJECT_DIR$/NASATestApp.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/nasa_ble/nasa_ble.iml" filepath="$PROJECT_DIR$/nasa_ble/nasa_ble.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/NASATestApp.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/NASATestApp.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/nasa_ble/NASATestApp.nasa_ble.iml" filepath="$PROJECT_DIR$/.idea/modules/nasa_ble/NASATestApp.nasa_ble.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/nasaconnect/NASATestApp.nasaconnect.iml" filepath="$PROJECT_DIR$/.idea/modules/nasaconnect/NASATestApp.nasaconnect.iml" />
     </modules>
   </component>
 </project>

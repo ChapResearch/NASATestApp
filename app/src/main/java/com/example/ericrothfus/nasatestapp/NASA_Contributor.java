@@ -1,15 +1,14 @@
 package com.example.ericrothfus.nasatestapp;
-import android.util.Log;
+
+import android.bluetooth.BluetoothDevice;
+
+import java.util.Date;
 
 //
 // NASA_Contributor - one of the remote devices that contribute data to the
 //                    controller.  There are normally 6, but this class doesn't
 //                    know that.
 //
-
-import android.bluetooth.BluetoothDevice;
-
-import java.util.Date;
 
 public class NASA_Contributor {
 

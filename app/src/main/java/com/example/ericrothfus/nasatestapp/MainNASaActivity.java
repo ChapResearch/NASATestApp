@@ -4,9 +4,9 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.design.widget.Snackbar;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+//import android.support.design.widget.Snackbar;
+//import android.support.v7.app.AppCompatActivity;
+//import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
@@ -19,6 +19,12 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Button;
 import android.widget.Toast;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 public class MainNASaActivity extends AppCompatActivity {
 
@@ -225,6 +231,14 @@ public class MainNASaActivity extends AppCompatActivity {
 		public void onClick(View view) {
 		    match++;
 		    ble.matchUpdateContributors();
+//		    ble.dataPushContributor(3,"{\"teamNumber\":\"1234\",\"teamColor\":\"red\",\"defenseTeamNum1\":\"9876\"}");
+			Map<String,String> attrValue = new HashMap<String,String>();
+			attrValue.put("teamNumber","2468");
+			attrValue.put("teamColor","red");
+			attrValue.put("defTeam1","1234");
+			attrValue.put("defTeam2","5628");
+			attrValue.put("defTeam3","3310");
+			boolean worked = ble.dataPushContributor(3,attrValue);
 		}
 	    });
 

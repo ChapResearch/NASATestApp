@@ -20,9 +20,9 @@ import android.os.ParcelUuid;
 import android.util.Log;
 
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class NASA_BLE {
@@ -39,9 +39,9 @@ public class NASA_BLE {
     private static final UUID NASA_BLE_CONTROLLER_PW = UUID.fromString("b1de1e91-6d8a-4b5c-8b06-2e64688d3fc9");
     private static final UUID NASA_BLE_CONTROLLER_MATCH = UUID.fromString("5eda1292-e156-11e8-9f32-f2801f1b9fd1");
     private static final UUID NASA_BLE_CONTROLLER_START = UUID.fromString("baa7db04-1e87-11e9-ab14-d663bd873d93");
-    private static final UUID NASA_BLE_CONTROLLER_RESET = UUID.fromString("50c0ee7a-231d-11e9-ab14-d663bd873d93");
+	private static final UUID NASA_BLE_CONTROLLER_RESET = UUID.fromString("50c0ee7a-231d-11e9-ab14-d663bd873d93");
 
-    // the individual characteristics for each contributor
+	// the individual characteristics for each contributor
     private UUID[] NASA_BLE_CONTRIBUTORS_READ = {
 	/* A */ UUID.fromString("b5c1d1ae-eb68-42f2-bc5f-278902252ca9"),
 	/* B */ UUID.fromString("02dad9d7-10c0-467f-9a64-9f2a380dc7bf"),
@@ -77,7 +77,7 @@ public class NASA_BLE {
     private BluetoothGattService nasaGATTservice;
     private BluetoothGattCharacteristic[] nasaGATTcharacteristicsREAD = new BluetoothGattCharacteristic[6];
     private BluetoothGattCharacteristic[] nasaGATTcharacteristicsWRITE = new BluetoothGattCharacteristic[6];
-    
+
     private BluetoothGattCharacteristic nasaGATTcharacteristicsNAME,
 	                                nasaGATTcharacteristicsPW,
 	                                nasaGATTcharacteristicsMATCH,
@@ -88,11 +88,11 @@ public class NASA_BLE {
     // CONSTRUCTOR - When creating the NASA_BLE object, go ahead and define all of the
     //               services and descriptors.
     //
-    public NASA_BLE(Context incomingContext,NASA_BLE_Interface callbacks)
+    public NASA_BLE(Context incomingContext, NASA_BLE_Interface callbacks)
     {
 	context = incomingContext;
 	NASAcallbacks = callbacks;
-	
+
 	for(int i=0; i < 6; i++) {
 	    contributors[i] = new NASA_Contributor(NASAcallbacks);
 	}
@@ -185,18 +185,47 @@ public class NASA_BLE {
     //				   contributors are listening for notifications on the match
     //				   number and that the match number was updated before calling this.
     //
-    public void matchUpdateContributors()
-    {
-	for(int i=0; i < contributors.length; i++) {
-	    if(contributors[i].connected) {
-		Log.v(TAG, "match notifying slot " + i);
-		nasaGATTcharacteristicsMATCH.setValue(NASAcallbacks.NASA_match());
-		nasaGATTserver.notifyCharacteristicChanged(contributors[i].device,
-							   nasaGATTcharacteristicsMATCH,
-							   false);
-	    }
+	public void matchUpdateContributors() {
+		for(int i=0; i < contributors.length; i++) {
+			if(contributors[i].connected) {
+			Log.v(TAG, "match notifying slot " + i);
+			nasaGATTcharacteristicsMATCH.setValue(NASAcallbacks.NASA_match());
+			nasaGATTserver.notifyCharacteristicChanged(contributors[i].device,
+								   nasaGATTcharacteristicsMATCH,
+								   false);
+			}
+		}
 	}
-    }
+
+	//
+	// dataPushContributor() - push the given JSON data to the given slot.
+	//                         BIG NOTE - don't know if this BLE can transmit data
+	//                         greater than 20 bytes, and "chunking" isn't implemented.
+	//                         So, for now, keep your updates 20 bytes of under of
+	//                         JSON string.
+	//
+	//                RETURNS: true if things went OK, false otherwise (like if the
+	//                         slot wasn't connected).
+	//
+	public boolean dataPushContributor(int slot, Map<String,String> attrValue) {
+		if(contributors[slot].connected) {
+			Log.v(TAG, "pushing data notifying slot " + slot);
+			int length = attrValue.size();
+			int count = 0;
+			for(Map.Entry<String,String> entry:attrValue.entrySet()) {
+				count += 1;
+				// the first part of the message sent indicates if there is MORE coming, 1 means more
+				String attrValueString = (count==length?'0':'1') + ":" + entry.getKey() + ":" + entry.getValue();
+				nasaGATTcharacteristicsREAD[slot].setValue(attrValueString);
+				nasaGATTserver.notifyCharacteristicChanged(contributors[slot].device,
+						nasaGATTcharacteristicsREAD[slot],
+						false);
+			}
+			return(true);
+		} else {
+			return (false);
+		}
+	}
 
     //
     // transmitContributors() - sends the data for each Contributor who has specified data, up to
@@ -301,42 +330,41 @@ public class NASA_BLE {
 	    .build();
     }
 
-    private void _defineCharacteristics()
-    {
-	int i;
-	int readProps = BluetoothGattCharacteristic.PROPERTY_READ | BluetoothGattCharacteristic.PROPERTY_NOTIFY;
-	int writeProps = BluetoothGattCharacteristic.PROPERTY_WRITE;
+    private void _defineCharacteristics() {
+		int i;
 
-	for(i=0; i < 6; i++) {
-	    nasaGATTcharacteristicsREAD[i] = new BluetoothGattCharacteristic(NASA_BLE_CONTRIBUTORS_READ[i], readProps,
-									    BluetoothGattCharacteristic.PERMISSION_READ);
-	    nasaGATTcharacteristicsWRITE[i] = new BluetoothGattCharacteristic(NASA_BLE_CONTRIBUTORS_WRITE[i], writeProps,
-									    BluetoothGattCharacteristic.PERMISSION_WRITE);
+		// a few short-hands for the definitions below
+		int readProps = BluetoothGattCharacteristic.PROPERTY_READ | BluetoothGattCharacteristic.PROPERTY_NOTIFY;
+		int writeProps = BluetoothGattCharacteristic.PROPERTY_WRITE;
+		int readPerm = BluetoothGattCharacteristic.PERMISSION_READ;
+		int writePerm = BluetoothGattCharacteristic.PERMISSION_WRITE;
+
+		// set up all of the specific characteristics for each contributor.
+		//    _WRITE - match/name data coming from the contributors (contributor writing)
+		//    _READ - specific data going to a particular contributor (contributor reading)
+		for (i = 0; i < 6; i++) {
+			nasaGATTcharacteristicsREAD[i] = new BluetoothGattCharacteristic(NASA_BLE_CONTRIBUTORS_READ[i], readProps, readPerm);
+			nasaGATTcharacteristicsWRITE[i] = new BluetoothGattCharacteristic(NASA_BLE_CONTRIBUTORS_WRITE[i], writeProps, writePerm);
+		}
+
+		nasaGATTcharacteristicsNAME = new BluetoothGattCharacteristic(NASA_BLE_CONTROLLER_NAME, readProps, readPerm);
+		nasaGATTcharacteristicsPW = new BluetoothGattCharacteristic(NASA_BLE_CONTROLLER_PW, readProps, readPerm);
+		nasaGATTcharacteristicsMATCH = new BluetoothGattCharacteristic(NASA_BLE_CONTROLLER_MATCH, readProps, readPerm);
+		nasaGATTcharacteristicsSTART = new BluetoothGattCharacteristic(NASA_BLE_CONTROLLER_START, readProps, readPerm);
+		nasaGATTcharacteristicsRESET = new BluetoothGattCharacteristic(NASA_BLE_CONTROLLER_RESET, readProps, readPerm);
+
+		// these characteristics need descriptors because they will need to be set-up for notification
+
+		nasaGATTcharacteristicsMATCH.addDescriptor(getClientCharacteristicConfigurationDescriptor());
+		nasaGATTcharacteristicsSTART.addDescriptor(getClientCharacteristicConfigurationDescriptor());
+		nasaGATTcharacteristicsRESET.addDescriptor(getClientCharacteristicConfigurationDescriptor());
+
+		for (i = 0; i < 6; i++) {
+			nasaGATTcharacteristicsREAD[i].addDescriptor(getClientCharacteristicConfigurationDescriptor());
+		}
 	}
 
-	nasaGATTcharacteristicsNAME = new BluetoothGattCharacteristic(NASA_BLE_CONTROLLER_NAME, readProps,
-									    BluetoothGattCharacteristic.PERMISSION_READ);
-
-	nasaGATTcharacteristicsPW = new BluetoothGattCharacteristic(NASA_BLE_CONTROLLER_PW, readProps,
-									    BluetoothGattCharacteristic.PERMISSION_READ);
-
-	nasaGATTcharacteristicsMATCH = new BluetoothGattCharacteristic(NASA_BLE_CONTROLLER_MATCH, readProps,
-									    BluetoothGattCharacteristic.PERMISSION_READ);
-
-	nasaGATTcharacteristicsSTART = new BluetoothGattCharacteristic(NASA_BLE_CONTROLLER_START, readProps,
-									    BluetoothGattCharacteristic.PERMISSION_READ);
-
-	nasaGATTcharacteristicsRESET = new BluetoothGattCharacteristic(NASA_BLE_CONTROLLER_RESET, readProps,
-									    BluetoothGattCharacteristic.PERMISSION_READ);
-
-	nasaGATTcharacteristicsMATCH.addDescriptor(getClientCharacteristicConfigurationDescriptor());
-	nasaGATTcharacteristicsSTART.addDescriptor(getClientCharacteristicConfigurationDescriptor());
-	nasaGATTcharacteristicsRESET.addDescriptor(getClientCharacteristicConfigurationDescriptor());
-
-    }
-
     private static final UUID CLIENT_CHARACTERISTIC_CONFIGURATION_UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
-	
 
     public static BluetoothGattDescriptor getClientCharacteristicConfigurationDescriptor() {
 	BluetoothGattDescriptor descriptor = new BluetoothGattDescriptor(

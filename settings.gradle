@@ -1,1 +1,1 @@
-include ':app', ':nasa_ble'
+include ':app', ':nasa_ble', ':nasaconnect'
