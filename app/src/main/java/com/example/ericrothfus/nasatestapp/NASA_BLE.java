@@ -160,6 +160,7 @@ public class NASA_BLE {
 							   false);
 
 		contributors[i].hasData = false;	// clear old data
+		contributors[i].data = new String();
 		contributors[i].teamNumber = null;	// clear team number
 
 		// the contributors will clear their team number and color, so go ahead and do it too

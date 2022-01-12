@@ -1,6 +1,7 @@
 package com.example.ericrothfus.nasatestapp;
 
 import android.bluetooth.BluetoothDevice;
+import android.util.Log;
 
 import java.util.Date;
 
@@ -158,6 +159,7 @@ public class NASA_Contributor {
     {
 	if(hasData) {
 	    // if there is old data, replace it
+		Log.d(TAG,"resetting data to first incoming packet");
 	    data = incomingData;
 	} else {
 	    // if there isn't old data, assume that we are simply adding to it

@@ -135,6 +135,7 @@ public class NASA_DB {
 	try {
 	    recordData = new JSONObject(data);	// assumed already in JSON format
 	    jsonMap = jsonToMap(recordData);
+	    Log.d(TAG, String.valueOf(jsonMap));
 	} catch (JSONException e) {
 	    Log.d(TAG,"Exception in json parsing");
 	    new Handler(Looper.getMainLooper()).post(new Runnable(){
